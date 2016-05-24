@@ -14,8 +14,10 @@
     ?id <- (print_board)
         =>
     (assert (print_board 20))
+	(retract ?id)
 )
 (defrule print_board_block
+	(declare(salience 100))
     ?id <- (print_board ?line_index)
     (row ?line_index X $?line_values X)
     (test (> ?line_index 0))
@@ -29,7 +31,6 @@
         =>
     (retract ?id)
 )
-
 
 ;; Initializare tabla joc
 (defrule init_board_for_begin
@@ -51,8 +52,53 @@
     ?id <- (init_board ?)
         =>
     (retract ?id)
+	(assert (print_board))
+	(bind ?piece_index (random 1 7))
+	(assert (current_piece ?piece_index))
 )
 
+;;Adaugarea unei piese in tabla de joc
+(defrule insert_piece
+	?id <- (current_piece ?piece_index)
+	?row_id1 <- (row 21 X $? X)
+	?row_id2 <- (row 20 X $? X)
+		=>
+	(retract ?row_id1)
+	(retract ?row_id2)
+	(assert (row 21 X 0 0 0 0 X X X 0 0 0 X))
+	(assert (row 20 X 0 0 0 0 0 X 0 0 0 0 X))
+	(assert (print_board))
+	(printout t crlf crlf)
+	(assert (move_piece 21 20 19))
+)
+
+;;Mutarea unei piese de joc pana jos
+(defrule move
+	?id <- (move_piece ?row_index1 ?row_index2 ?row_index3)
+	?row_id1 <- (row ?row_index1 X $? X)
+	?row_id2 <- (row ?row_index2 X $? X)
+	?row_id3 <- (row ?row_index3 X $? X)
+	(test (> ?row_index1 2))
+		=>
+	(retract ?id)	
+	(retract ?row_id1)
+	(retract ?row_id2)
+	(retract ?row_id3)
+	(assert (row ?row_index1 X 0 0 0 0 0 0 0 0 0 0 X))
+	(assert (row ?row_index2 X 0 0 0 0 X X X 0 0 0 X))
+	(assert (row ?row_index3 X 0 0 0 0 0 X 0 0 0 0 X))
+	(assert (print_board 20))
+	(printout t " " crlf)
+	(printout t " " crlf)
+	(assert (move_piece ?row_index2 ?row_index3 (- ?row_index3 1)))
+)
+(defrule move_end
+	?id_row <- (move_piece ?row_index1 ?row_index2 ?row_index3)
+	?id_piece <- (current_piece ?piece_index)
+	=>
+	(retract ?id_row)
+	(retract ?id_piece)
+)
 
 ;; Stergere linii ocupate
 (defrule remove_line_end
