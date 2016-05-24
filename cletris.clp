@@ -1,3 +1,8 @@
+(defglobal
+    ?*rows* = 20
+    ?*cols* = 10
+)
+
 (deffacts tetris
     (init_game)
 )
@@ -13,113 +18,102 @@
 (defrule print_board_begin
     ?id <- (print_board)
         =>
-    (assert (print_board 20))
-	(retract ?id)
-)
-(defrule print_board_block
-	(declare(salience 100))
-    ?id <- (print_board ?line_index)
-    (row ?line_index X $?line_values X)
-    (test (> ?line_index 0))
-        =>
+    (assert (print_board_line 20))
     (retract ?id)
-    (assert (print_board (- ?line_index 1)))
-    (printout t $?line_values crlf)
 )
 (defrule print_board_end
-    ?id <- (print_board ?)
+    ?id <- (print_board_line 0)
         =>
     (retract ?id)
 )
+(defrule print_board_block
+    ?id <- (print_board_line ?line_index)
+    (cell ?line_index  1 ?value01)
+    (cell ?line_index  2 ?value02)
+    (cell ?line_index  3 ?value03)
+    (cell ?line_index  4 ?value04)
+    (cell ?line_index  5 ?value05)
+    (cell ?line_index  6 ?value06)
+    (cell ?line_index  7 ?value07)
+    (cell ?line_index  8 ?value08)
+    (cell ?line_index  9 ?value09)
+    (cell ?line_index 10 ?value10)
+        =>
+    (retract ?id)
+    (printout t ?value01 ?value02 ?value03 ?value04 ?value05 ?value06 ?value07 ?value08 ?value09 ?value10 crlf)
+    (assert (print_board_line (- ?line_index 1)))
+)
+
 
 ;; Initializare tabla joc
-(defrule init_board_for_begin
+(defrule init_board_begin
     ?id <- (init_board)
         =>
     (retract ?id)
-    (assert (init_board 21))
-    (assert (row 0 X X X X X X X X X X X X))
+    (assert (init_board_line 21))
 )
-(defrule init_board_for_block
-    ?id <- (init_board ?line_index)
-    (test (> ?line_index 0))
+(defrule init_board_end
+    ?id <- (init_board_line 0)
+        =>
+    (bind ?line_index 0)
+    (retract ?id)
+    (assert (line 0))
+    (assert (cell ?line_index  0 X))
+    (assert (cell ?line_index  1 X))
+    (assert (cell ?line_index  2 X))
+    (assert (cell ?line_index  3 X))
+    (assert (cell ?line_index  4 X))
+    (assert (cell ?line_index  5 X))
+    (assert (cell ?line_index  6 X))
+    (assert (cell ?line_index  7 X))
+    (assert (cell ?line_index  8 X))
+    (assert (cell ?line_index  9 X))
+    (assert (cell ?line_index 10 X))
+    (assert (cell ?line_index 11 X))
+)
+(defrule init_board_block
+    ?id <- (init_board_line ?line_index)
         =>
     (retract ?id)
-    (assert (init_board (- ?line_index 1)))
-    (assert (row ?line_index X 0 0 0 0 0 0 0 0 0 0 X))
-)
-(defrule init_board_for_end
-    ?id <- (init_board ?)
-        =>
-    (retract ?id)
-	(assert (print_board))
-	(bind ?piece_index (random 1 7))
-	(assert (current_piece ?piece_index))
-)
-
-;;Adaugarea unei piese in tabla de joc
-(defrule insert_piece
-	?id <- (current_piece ?piece_index)
-	?row_id1 <- (row 21 X $? X)
-	?row_id2 <- (row 20 X $? X)
-		=>
-	(retract ?row_id1)
-	(retract ?row_id2)
-	(assert (row 21 X 0 0 0 0 X X X 0 0 0 X))
-	(assert (row 20 X 0 0 0 0 0 X 0 0 0 0 X))
-	(assert (print_board))
-	(printout t crlf crlf)
-	(assert (move_piece 21 20 19))
+    (assert (line ?line_index))
+    (assert (cell ?line_index  0 X))
+    (assert (cell ?line_index  1 O))
+    (assert (cell ?line_index  2 O))
+    (assert (cell ?line_index  3 O))
+    (assert (cell ?line_index  4 O))
+    (assert (cell ?line_index  5 O))
+    (assert (cell ?line_index  6 O))
+    (assert (cell ?line_index  7 O))
+    (assert (cell ?line_index  8 O))
+    (assert (cell ?line_index  9 O))
+    (assert (cell ?line_index 10 O))
+    (assert (cell ?line_index 11 X))
+    (assert (init_board_line (- ?line_index 1)))
 )
 
-;;Mutarea unei piese de joc pana jos
-(defrule move
-	?id <- (move_piece ?row_index1 ?row_index2 ?row_index3)
-	?row_id1 <- (row ?row_index1 X $? X)
-	?row_id2 <- (row ?row_index2 X $? X)
-	?row_id3 <- (row ?row_index3 X $? X)
-	(test (> ?row_index1 2))
-		=>
-	(retract ?id)	
-	(retract ?row_id1)
-	(retract ?row_id2)
-	(retract ?row_id3)
-	(assert (row ?row_index1 X 0 0 0 0 0 0 0 0 0 0 X))
-	(assert (row ?row_index2 X 0 0 0 0 X X X 0 0 0 X))
-	(assert (row ?row_index3 X 0 0 0 0 0 X 0 0 0 0 X))
-	(assert (print_board 20))
-	(printout t " " crlf)
-	(printout t " " crlf)
-	(assert (move_piece ?row_index2 ?row_index3 (- ?row_index3 1)))
-)
-(defrule move_end
-	?id_row <- (move_piece ?row_index1 ?row_index2 ?row_index3)
-	?id_piece <- (current_piece ?piece_index)
-	=>
-	(retract ?id_row)
-	(retract ?id_piece)
-)
 
-;; Stergere linii ocupate
+; Stergere linii ocupate
 (defrule remove_line_end
     ?id <- (remove_line 21)
         =>
     (retract ?id)
     (assert (row 21 X 0 0 0 0 0 0 0 0 0 0 X))
 )
-(defrule remove_line_block
-    ?id1 <- (remove_line ?line_index)
-    ?id2 <- (row ?line_index $?line_values)
+(defrule remove_line_block_1
+    (remove_line ?line_index)
+    ?id2 <- (cell ?line_index $?line_values)
         =>
     (retract ?id1)
     (retract ?id2)
     (assert (remove_line (+ ?line_index 1)))
     (assert (row (- ?line_index 1) $?line_values))
 )
+(defrule remove_line_block_2
+    ?id1 <- (remove_line ?line_index)
 (defrule remove_line_begin
-    ?id1 <- (row ?line_index1 X X X X X X X X X X X X)
-    (test (> ?line_index1 0))
+    (line ?line_index)
+    (test (> ?line_index 0))
+    (forall (cell ?line_index ?col_index ?) (cell ?line_index ?col_index X))
         =>
-    (retract ?id1)
-    (assert (remove_line (+ ?line_index1 1)))
+    (assert (remove_line ?line_index))
 )
